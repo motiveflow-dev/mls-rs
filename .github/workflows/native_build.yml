@@ -54,6 +54,24 @@ jobs:
       - run: |
           sudo apt-get install -y libsqlite3-dev
         if: runner.os == 'Linux'
+      # uniffi's Kotlin test runner compiles generated bindings with
+      # `kotlinc -Werror`. Kotlin 2.4 (runner images since mid-2026) warns
+      # "expression is unused" on uniffi 0.31's generated
+      # `IntegrityCheckingUniffiLib` / `UniffiLib` references, failing
+      # mls-rs-uniffi's kotlin_scenarios. Pin the version the runners shipped
+      # when CI was last green (2.3.21), verified by checksum.
+      - name: Install Kotlin 2.3.21
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -sSfL -o "$RUNNER_TEMP/kotlinc.zip" https://github.com/JetBrains/kotlin/releases/download/v2.3.21/kotlin-compiler-2.3.21.zip
+          echo "a8cfc1d62cd4d0de4d04f42575e40135bd620588c17d568a20eb9c7c259af14f  $RUNNER_TEMP/kotlinc.zip" | shasum -a 256 -c -
+          unzip -q "$RUNNER_TEMP/kotlinc.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/kotlinc/bin" >> "$GITHUB_PATH"
+      - name: Show kotlinc version
+        if: runner.os != 'Windows'
+        run: kotlinc -version 2>&1
       - name: Test Full RFC Compliance
         
         # Don't test AWS LC on all features as it makes it build both FIPS and non-FIPS versions
@@ -172,6 +190,24 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
+      # uniffi's Kotlin test runner compiles generated bindings with
+      # `kotlinc -Werror`. Kotlin 2.4 (runner images since mid-2026) warns
+      # "expression is unused" on uniffi 0.31's generated
+      # `IntegrityCheckingUniffiLib` / `UniffiLib` references, failing
+      # mls-rs-uniffi's kotlin_scenarios. Pin the version the runners shipped
+      # when CI was last green (2.3.21), verified by checksum.
+      - name: Install Kotlin 2.3.21
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -sSfL -o "$RUNNER_TEMP/kotlinc.zip" https://github.com/JetBrains/kotlin/releases/download/v2.3.21/kotlin-compiler-2.3.21.zip
+          echo "a8cfc1d62cd4d0de4d04f42575e40135bd620588c17d568a20eb9c7c259af14f  $RUNNER_TEMP/kotlinc.zip" | shasum -a 256 -c -
+          unzip -q "$RUNNER_TEMP/kotlinc.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/kotlinc/bin" >> "$GITHUB_PATH"
+      - name: Show kotlinc version
+        if: runner.os != 'Windows'
+        run: kotlinc -version 2>&1
       - name: Setup code coverage
         run: cargo install cargo-llvm-cov
       - name: Run code coverage
