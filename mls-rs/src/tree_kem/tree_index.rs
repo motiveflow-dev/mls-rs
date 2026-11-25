@@ -178,7 +178,7 @@ impl TreeIndex {
                 return Err(MlsError::DuplicateLeafData(**entry.get()));
             }
 
-            // clippy::some_filter is new in Rust 1.100; left unchanged (CI drift fix only).
+            // clippy::some_filter: toolchain drift (Rust 1.100), no behaviour change.
             #[allow(clippy::some_filter)]
             let in_use_cred_type_unsupported_by_new_leaf = self
                 .credential_type_counters

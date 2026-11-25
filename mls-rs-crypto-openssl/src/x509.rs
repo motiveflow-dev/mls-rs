@@ -209,11 +209,11 @@ impl mls_rs_identity_x509::X509CertificateReader for X509Reader {
     ) -> Result<Vec<mls_rs_identity_x509::SubjectComponent>, Self::Error> {
         let subject = self.parse_certificate(certificate)?;
 
-        // `Asn1StringRef::as_utf8` was deprecated in openssl 0.10.81 because it
-        // truncates at the first interior NUL byte. Switching to `to_string`
-        // would change which subject components this provider reports, so the
-        // existing behaviour is kept here and the change is left for a
-        // dedicated review (CI drift fix only).
+        // deprecated (`Asn1StringRef::as_utf8`, openssl 0.10.81): dependency
+        // drift, no behaviour change. It is deprecated because it truncates at
+        // the first interior NUL byte; switching to `to_string` would change
+        // which subject components this provider reports, so that is left for
+        // a dedicated review.
         #[allow(deprecated)]
         let components = subject
             .subject_name()
@@ -665,9 +665,10 @@ mod tests {
     // windows-latest have too, so validate_chain() returns
     // ChainValidationFailure("unable to get local issuer certificate") on
     // every runner. Ignored everywhere until the fixture is replaced with a
-    // chain whose root is in current stores; run it with `--ignored` on a host
-    // that still trusts that root.
-    #[ignore = "depends on DigiCert Global Root CA being in the host trust store"]
+    // chain whose root is in current stores
+    // (https://github.com/motiveflow-dev/mls-rs/issues/3); run it with
+    // `--ignored` on a host that still trusts that root.
+    #[ignore = "fixture chain anchors on DigiCert Global Root CA, removed from current trust stores; see https://github.com/motiveflow-dev/mls-rs/issues/3"]
     fn can_validate_against_system_ca_list() {
         let chain = load_test_system_cert_chain();
 

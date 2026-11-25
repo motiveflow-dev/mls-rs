@@ -20,5 +20,7 @@ ignore = [
     # reports no match.
     #
     # Remove when mls-rs-crypto-rustcrypto moves to crypto-bigint >= 0.7.6.
+    # Tracking: https://github.com/motiveflow-dev/mls-rs/issues/4
+    # review-by: 2027-02-25
     "RUSTSEC-2026-0387",
 ]
