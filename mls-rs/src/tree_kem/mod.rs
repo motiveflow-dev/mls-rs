@@ -625,6 +625,8 @@ impl TreeKemPublic {
         let mut added = vec![];
         let mut bad_indexes = vec![];
 
+        // Index loop kept as-is: the body records `i` in `bad_indexes` (CI drift fix only).
+        #[allow(clippy::needless_range_loop)]
         for i in 0..proposal_bundle.additions.len() {
             let leaf = proposal_bundle.additions[i]
                 .proposal

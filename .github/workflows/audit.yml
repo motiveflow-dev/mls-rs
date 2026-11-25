@@ -14,10 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
+      checks: write
       contents: read
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/audit-check@v1
+      - uses: actions/checkout@v4
+      # actions-rs/audit-check is archived and could not create its check run
+      # here ("Resource not accessible by integration"). rustsec/audit-check is
+      # the maintained successor. Ignored advisories, each with its reason,
+      # live in .cargo/audit.toml so a local `cargo audit` agrees with CI.
+      - uses: rustsec/audit-check@v2.0.0
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         with:

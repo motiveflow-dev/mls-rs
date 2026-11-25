@@ -394,6 +394,8 @@ where
     #[cfg(feature = "by_ref_proposal")]
     let mut bad_indices = Vec::new();
 
+    // Index loop kept as-is: the body pushes `i` into `bad_indices` (CI drift fix only).
+    #[allow(clippy::needless_range_loop)]
     for i in 0..proposals.psk_proposals().len() {
         let p = &proposals.psks[i];
 
