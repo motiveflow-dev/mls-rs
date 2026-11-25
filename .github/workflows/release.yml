@@ -115,22 +115,37 @@ jobs:
           path: wheels
           merge-multiple: true
 
-      - name: Check wheel tags
+      # Compares tag SETS, not filename strings: maturin 1.16 orders the
+      # compressed tags differently from the maturin that built v0.1.1
+      # (manylinux2014_x86_64.manylinux_2_17_x86_64 vs the reverse), which is
+      # the same wheel compatibility.
+      - name: Check wheel names and tags against v0.1.1
         shell: bash
         run: |
           set -euo pipefail
           ls -1 wheels
-          for tag in \
-            'py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64' \
-            'py3-none-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2' \
-            'py3-none-win_amd64'; do
-            n=$(ls wheels | grep -c -- "-${tag}\.whl$" || true)
-            if [ "$n" != "1" ]; then
-              echo "::error::expected exactly one wheel tagged ${tag}, found ${n}"
-              exit 1
-            fi
-          done
-          [ "$(ls wheels | wc -l)" = "3" ] || { echo "::error::expected 3 wheels"; exit 1; }
+          python3 - wheels <<'PY'
+          import os, sys
+          expected = [
+              {"py3-none-manylinux_2_17_x86_64", "py3-none-manylinux2014_x86_64"},
+              {"py3-none-macosx_10_12_x86_64", "py3-none-macosx_11_0_arm64",
+               "py3-none-macosx_10_12_universal2"},
+              {"py3-none-win_amd64"},
+          ]
+          found = []
+          for name in sorted(os.listdir(sys.argv[1])):
+              assert name.endswith(".whl"), name
+              dist, _version, py, abi, plat = name[:-4].split("-")
+              # Distribution renamed to agentvault-mls in 0.1.2.
+              assert dist == "agentvault_mls", f"{name}: distribution {dist!r}"
+              found.append({f"{p}-{a}-{q}" for p in py.split(".")
+                            for a in abi.split(".") for q in plat.split(".")})
+          for tags in expected:
+              n = sum(1 for f in found if f == tags)
+              assert n == 1, f"expected one wheel tagged {sorted(tags)}, found {n}"
+          assert len(found) == len(expected), f"expected {len(expected)} wheels, found {len(found)}"
+          print("wheel names and tags OK")
+          PY
 
       - uses: actions/setup-python@v5
         with:
@@ -141,13 +156,24 @@ jobs:
         run: |
           set -euo pipefail
           python -m venv "$RUNNER_TEMP/venv"
-          "$RUNNER_TEMP/venv/bin/pip" install --no-index wheels/*-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+          "$RUNNER_TEMP/venv/bin/pip" install --no-index wheels/*manylinux*x86_64*.whl
           # Run from outside the checkout so the import can only resolve to
           # the installed wheel.
           mkdir "$RUNNER_TEMP/smoke"
           cp mls-rs-uniffi/tests/simple_scenario_sync.py mls-rs-uniffi/tests/export_secret_sync.py "$RUNNER_TEMP/smoke/"
           cd "$RUNNER_TEMP/smoke"
           "$RUNNER_TEMP/venv/bin/python" -I -c 'import mls_rs_uniffi, sys; print(mls_rs_uniffi.__file__); assert "site-packages" in mls_rs_uniffi.__file__'
+          # METADATA must carry the new distribution name, and it must map to
+          # the unchanged import package.
+          "$RUNNER_TEMP/venv/bin/python" -I - <<'PY'
+          import importlib.metadata as md
+          dist = md.distribution("agentvault-mls")
+          print("METADATA Name:", dist.metadata["Name"], dist.version)
+          assert dist.metadata["Name"] == "agentvault-mls", dist.metadata["Name"]
+          top = {f.parts[0] for f in dist.files}
+          print("top-level entries:", sorted(top))
+          assert "mls_rs_uniffi" in top, top
+          PY
           "$RUNNER_TEMP/venv/bin/python" -I simple_scenario_sync.py
           "$RUNNER_TEMP/venv/bin/python" -I export_secret_sync.py
           echo "smoke OK"
@@ -159,7 +185,7 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     environment:
       name: pypi-release
-      url: https://pypi.org/project/agentvault-mls-rs-uniffi/
+      url: https://pypi.org/project/agentvault-mls/
     permissions:
       id-token: write
     steps:

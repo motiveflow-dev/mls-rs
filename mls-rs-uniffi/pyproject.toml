@@ -3,7 +3,7 @@ requires = ["maturin>=1.7,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "agentvault-mls-rs-uniffi"
+name = "agentvault-mls"
 version = "0.1.1"
 description = "AgentVault's patched UniFFI Python bindings for mls-rs (RFC 9420 MLS)"
 readme = "README.md"
@@ -31,12 +31,17 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/motiveflowllc/mls-rs"
-Repository = "https://github.com/motiveflowllc/mls-rs"
-Issues = "https://github.com/motiveflowllc/mls-rs/issues"
+Homepage = "https://github.com/motiveflow-dev/mls-rs"
+Repository = "https://github.com/motiveflow-dev/mls-rs"
+Issues = "https://github.com/motiveflow-dev/mls-rs/issues"
 
 [tool.maturin]
 bindings = "uniffi"
+# The distribution was renamed from agentvault-mls-rs-uniffi to
+# agentvault-mls (0.1.2). The import name stays `mls_rs_uniffi`: AgentVault's
+# Hermes plugin imports it, so pin it here instead of letting maturin derive
+# it from the project name.
+module-name = "mls_rs_uniffi"
 features = ["vendored-openssl", "uniffi-bindgen-binary"]
 # strip=false is REQUIRED for UniFFI on Linux. uniffi-bindgen reads metadata
 # embedded in the compiled cdylib (the `__UNIFFI_PROC_MACRO_METADATA` symbol
