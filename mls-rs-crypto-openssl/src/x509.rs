@@ -209,6 +209,12 @@ impl mls_rs_identity_x509::X509CertificateReader for X509Reader {
     ) -> Result<Vec<mls_rs_identity_x509::SubjectComponent>, Self::Error> {
         let subject = self.parse_certificate(certificate)?;
 
+        // deprecated (`Asn1StringRef::as_utf8`, openssl 0.10.81): dependency
+        // drift, no behaviour change. It is deprecated because it truncates at
+        // the first interior NUL byte; switching to `to_string` would change
+        // which subject components this provider reports, so that is left for
+        // a dedicated review.
+        #[allow(deprecated)]
         let components = subject
             .subject_name()
             .entries()
@@ -651,13 +657,18 @@ mod tests {
     }
 
     #[test]
-    // GitHub macos-14 runners ship a system CA bundle that doesn't include the
-    // issuer used by load_test_system_cert_chain(), so validate_chain() returns
-    // ChainValidationFailure("unable to get local issuer certificate") and the
-    // unwrap() below panics. Test passes on Linux runners (different CA bundle
-    // contents). Skipping on macOS pending an upstream refresh of the test
-    // chain's issuer or a runner-side CA fix.
-    #[cfg_attr(target_os = "macos", ignore = "macOS runner CA bundle mismatch")]
+    // This test depends on the host's trust store. The fixture chain
+    // (github.com leaf from 2022 -> "DigiCert TLS Hybrid ECC SHA384 2020 CA1")
+    // anchors on "DigiCert Global Root CA", which current trust stores no
+    // longer include for TLS. macOS-14 runners dropped it first; by November
+    // 2026 the ubuntu-latest system store and the curl/Mozilla bundle used on
+    // windows-latest have too, so validate_chain() returns
+    // ChainValidationFailure("unable to get local issuer certificate") on
+    // every runner. Ignored everywhere until the fixture is replaced with a
+    // chain whose root is in current stores
+    // (https://github.com/motiveflow-dev/mls-rs/issues/3); run it with
+    // `--ignored` on a host that still trusts that root.
+    #[ignore = "fixture chain anchors on DigiCert Global Root CA, removed from current trust stores; see https://github.com/motiveflow-dev/mls-rs/issues/3"]
     fn can_validate_against_system_ca_list() {
         let chain = load_test_system_cert_chain();
 

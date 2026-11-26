@@ -1,4 +1,4 @@
-# agentvault-mls-rs-uniffi
+# agentvault-mls
 
 AgentVault's patched UniFFI Python bindings for [mls-rs] (RFC 9420 Messaging Layer Security).
 
@@ -17,8 +17,10 @@ The patches are additive (no breaking changes) and are intended to be upstreamed
 ## Install
 
 ```bash
-pip install agentvault-mls-rs-uniffi
+pip install agentvault-mls
 ```
+
+The import name is `mls_rs_uniffi`. Releases up to 0.1.1 were published as `agentvault-mls-rs-uniffi`; from 0.1.2 the distribution is `agentvault-mls`. Uninstall the old one first (`pip uninstall agentvault-mls-rs-uniffi`), because both install the same `mls_rs_uniffi` package.
 
 Wheels are published for:
 
@@ -38,11 +40,11 @@ client = Client(name=b"alice", signature_keypair=keypair, client_config=config)
 key_package = client.generate_key_package_message()
 ```
 
-See the upstream [mls-rs-uniffi tests](https://github.com/motiveflowllc/mls-rs/tree/main/mls-rs-uniffi/tests) for more examples.
+See the upstream [mls-rs-uniffi tests](https://github.com/motiveflow-dev/mls-rs/tree/main/mls-rs-uniffi/tests) for more examples.
 
 ## Why a fork
 
-Phase 0 of AgentVault's Hermes plugin validated wire-format interop between Python (mls-rs-uniffi) and Node (ts-mls), but `ts-mls` requires access to the message wire bytes and the group's exported secret — neither of which is exposed by upstream `mls-rs-uniffi` as of `v0.13.0`. The fork adds these as additive UniFFI methods. See [the patch](https://github.com/motiveflowllc/mls-rs/blob/agentvault/uniffi-export-secret-and-message-bytes/mls-rs-uniffi/src/lib.rs) for full diff.
+Phase 0 of AgentVault's Hermes plugin validated wire-format interop between Python (mls-rs-uniffi) and Node (ts-mls), but `ts-mls` requires access to the message wire bytes and the group's exported secret — neither of which is exposed by upstream `mls-rs-uniffi` as of `v0.13.0`. The fork adds these as additive UniFFI methods. See [the patch](https://github.com/motiveflow-dev/mls-rs/blob/agentvault/uniffi-export-secret-and-message-bytes/mls-rs-uniffi/src/lib.rs) for full diff.
 
 ## License
 

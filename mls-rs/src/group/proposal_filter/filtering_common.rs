@@ -394,6 +394,8 @@ where
     #[cfg(feature = "by_ref_proposal")]
     let mut bad_indices = Vec::new();
 
+    // clippy::needless_range_loop: toolchain drift (Rust 1.100), no behaviour change.
+    #[allow(clippy::needless_range_loop)]
     for i in 0..proposals.psk_proposals().len() {
         let p = &proposals.psks[i];
 

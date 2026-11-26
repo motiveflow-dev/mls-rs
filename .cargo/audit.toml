@@ -1,0 +1,26 @@
+# cargo-audit configuration, read by `cargo audit` locally and by
+# rustsec/audit-check in .github/workflows/audit.yml.
+#
+# Every ignore needs: the advisory, why it does not reach what we ship, and
+# what would let us remove it.
+
+[advisories]
+ignore = [
+    # RUSTSEC-2026-0387: crypto-bigint < 0.7.6 has timing variability in
+    # operations meant to be constant-time.
+    #
+    # Reached only through mls-rs-crypto-rustcrypto -> p256/p384 0.13 ->
+    # elliptic-curve 0.13 -> crypto-bigint 0.5.5. There is no patched 0.5.x;
+    # the fix needs the elliptic-curve 0.14 / p256 0.14 generation, which is a
+    # crypto-provider upgrade, not a CI fix, so it is tracked separately.
+    #
+    # The shipped Python wheel (mls-rs-uniffi) uses mls-rs-crypto-openssl and
+    # does not depend on crypto-bigint at all:
+    #   cargo tree -i crypto-bigint -p mls-rs-uniffi --features vendored-openssl
+    # reports no match.
+    #
+    # Remove when mls-rs-crypto-rustcrypto moves to crypto-bigint >= 0.7.6.
+    # Tracking: https://github.com/motiveflow-dev/mls-rs/issues/4
+    # review-by: 2027-02-25
+    "RUSTSEC-2026-0387",
+]

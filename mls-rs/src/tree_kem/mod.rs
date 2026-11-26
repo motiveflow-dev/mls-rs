@@ -625,6 +625,8 @@ impl TreeKemPublic {
         let mut added = vec![];
         let mut bad_indexes = vec![];
 
+        // clippy::needless_range_loop: toolchain drift (Rust 1.100), no behaviour change.
+        #[allow(clippy::needless_range_loop)]
         for i in 0..proposal_bundle.additions.len() {
             let leaf = proposal_bundle.additions[i]
                 .proposal
